@@ -1,10 +1,11 @@
-schema_version: "0.3.0"
+schema_version: "0.4.0"
 
 suite:
   id: perturbation_prediction_model_metrics
-  version: "0.1.0-draft"
+  version: "0.3.0-draft"
   scope: prediction_level_metrics_only
   prediction_objects:
+    - single_cell_population
     - differential_expression_result
     - condition_level_gene_expression_centroid
   purpose: >-
@@ -44,35 +45,35 @@ sources:
 
 active_historical_metrics:
   - id: mean_rowwise_rmse
-    component_path: deg/mean_rowwise_error
+    component_path: deg/rowwise
     target: selected DE layer; currently clipped_sign_log10_pval
     direction: minimize
     scoring_unit: condition
     aggregation: macro mean across conditions
 
   - id: mean_rowwise_mae
-    component_path: deg/mean_rowwise_error
+    component_path: deg/rowwise
     target: selected DE layer; currently clipped_sign_log10_pval
     direction: minimize
     scoring_unit: condition
     aggregation: macro mean across conditions
 
   - id: mean_rowwise_pearson
-    component_path: deg/mean_rowwise_correlation
+    component_path: deg/rowwise
     target: selected DE layer; currently clipped_sign_log10_pval
     direction: maximize
     scoring_unit: condition
     aggregation: macro mean across conditions
 
   - id: mean_rowwise_spearman
-    component_path: deg/mean_rowwise_correlation
+    component_path: deg/rowwise
     target: selected DE layer; currently clipped_sign_log10_pval
     direction: maximize
     scoring_unit: condition
     aggregation: macro mean across conditions
 
   - id: mean_rowwise_cosine
-    component_path: deg/mean_rowwise_correlation
+    component_path: deg/rowwise
     target: selected DE layer; currently clipped_sign_log10_pval
     direction: maximize
     scoring_unit: condition
@@ -84,13 +85,13 @@ paper_model_metrics:
   aggregation: macro mean across finite condition scores
   metrics:
     - id: mse
-      component_path: pseudobulk/mse
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: mean squared error between predicted and observed centroids over all genes
       direction: minimize
 
     - id: weighted_mse
-      component_path: pseudobulk/weighted_mse
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: >-
         mean squared centroid error weighted by squared min-max-normalized
@@ -98,19 +99,19 @@ paper_model_metrics:
       direction: minimize
 
     - id: pearson_delta_control
-      component_path: pseudobulk/pearson_delta_control
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: Pearson correlation between predicted and observed control-referenced effects over all genes
       direction: maximize
 
     - id: pearson_delta_control_degs
-      component_path: pseudobulk/pearson_delta_control_degs
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: Pearson correlation between control-referenced effects restricted to DE genes
       direction: maximize
 
     - id: pearson_delta_perturbed_mean
-      component_path: pseudobulk/pearson_delta_perturbed_mean
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: >-
         Pearson correlation after subtracting the equal-condition-weighted
@@ -118,7 +119,7 @@ paper_model_metrics:
       direction: maximize
 
     - id: pearson_delta_perturbed_mean_degs
-      component_path: pseudobulk/pearson_delta_perturbed_mean_degs
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: >-
         training-perturbation-mean-referenced Pearson restricted to
@@ -126,19 +127,19 @@ paper_model_metrics:
       direction: maximize
 
     - id: r2_delta_control
-      component_path: pseudobulk/r2_delta_control
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: R-squared between predicted and observed control-referenced effects over all genes
       direction: maximize
 
     - id: r2_delta_control_degs
-      component_path: pseudobulk/r2_delta_control_degs
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: control-referenced R-squared restricted to DE genes
       direction: maximize
 
     - id: r2_delta_perturbed_mean
-      component_path: pseudobulk/r2_delta_perturbed_mean
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: >-
         R-squared after subtracting the equal-condition-weighted
@@ -146,25 +147,25 @@ paper_model_metrics:
       direction: maximize
 
     - id: r2_delta_perturbed_mean_degs
-      component_path: pseudobulk/r2_delta_perturbed_mean_degs
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: perturbed-mean-referenced R-squared restricted to DE genes
       direction: maximize
 
     - id: weighted_r2_delta_control
-      component_path: pseudobulk/weighted_r2_delta_control
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: continuously DE-weighted R-squared on control-referenced effects
       direction: maximize
 
     - id: weighted_r2_delta_perturbed_mean
-      component_path: pseudobulk/weighted_r2_delta_perturbed_mean
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: continuously DE-weighted R-squared on perturbed-mean-referenced effects
       direction: maximize
 
     - id: normalized_inverse_rank
-      component_path: pseudobulk/normalized_inverse_rank
+      component_path: pseudobulk/condition_centroid
       source: miller
       protocol: >-
         Within each covariate group, compute the fraction of unmatched observed
@@ -174,7 +175,7 @@ paper_model_metrics:
       cross_perturbation_scope: transposed retrieval
 
     - id: centroid_accuracy
-      component_path: pseudobulk/centroid_accuracy
+      component_path: pseudobulk/condition_centroid
       source: systema
       protocol: >-
         Fraction of unmatched observed perturbation centroids farther from a
@@ -185,19 +186,83 @@ paper_model_metrics:
         This has the same released formula as Normalized Inverse Rank when the
         candidate pool is the same. It is retained as a source alias, not an
         independent aggregate vote.
+      alias_of: normalized_inverse_rank
+      role: diagnostic_alias
 
-data_contract:
-  truth: condition_by_gene observed centroid matrix
-  prediction: condition_by_gene predicted centroid matrix
-  control_reference: condition-matched control centroid matrix
-  perturbed_mean_reference: >-
-    equal-condition-weighted training-perturbation mean within the covariate group
-  deg_mask: condition_by_gene boolean DE calls
-  deg_weights: >-
-    condition_by_gene squared min-max-normalized absolute ground-truth DE test
-    statistics, normalized to sum to one per condition
-  condition_keys: stable keys used to align predictions, truths, and retrieval candidates
-  candidate_groups: covariate groups that define valid retrieval candidate pools
+single_cell_model_metrics:
+  prediction_object: normalized cells by genes with perturbation labels
+  component_path: single_cell/scperteval_distributional
+  scoring_unit: perturbation condition
+  aggregation: macro mean across perturbations with finite scores
+  grouping: >-
+    optional evaluator-declared group keys prepare and score each covariate
+    population independently before condition-level macro aggregation
+  implementation: >-
+    Thin adapter over the public prepare and score interface in the pinned
+    scperteval[sinkhorn]==0.1.0 package. The adapter prepares all protocols
+    once and preserves scPertEval's exact feature-space and metric logic.
+  finite_sample_note: >-
+    The unbiased MMD and energy estimators can be negative at finite sample
+    sizes. Raw package values are preserved and are never silently clamped.
+  metrics:
+    - id: unbiased_mmd_median_top_k
+      protocol: unbiased_mmd_median_top_k=50
+      source: scperteval
+      direction: minimize
+      perfect_value: 0
+      feature_space: top 50 genes by absolute ground-truth effect size per perturbation
+    - id: unbiased_mmd_median_pca_k
+      protocol: unbiased_mmd_median_pca_k=50
+      source: scperteval
+      direction: minimize
+      perfect_value: 0
+      feature_space: 50 principal components fit by the evaluator on observed cells
+    - id: energy_distance_top_k
+      protocol: energy_distance_top_k=50
+      source: scperteval
+      direction: minimize
+      perfect_value: 0
+      feature_space: top 50 genes by absolute ground-truth effect size per perturbation
+    - id: energy_distance_pca_k
+      protocol: energy_distance_pca_k=50
+      source: scperteval
+      direction: minimize
+      perfect_value: 0
+      feature_space: 50 principal components fit by the evaluator on observed cells
+    - id: sinkhorn_w2_top_k
+      protocol: sinkhorn_w2_top_k=50
+      source: scperteval
+      direction: minimize
+      perfect_value: 0
+      feature_space: top 50 genes by absolute ground-truth effect size per perturbation
+    - id: sinkhorn_w2_pca_k
+      protocol: sinkhorn_w2_pca_k=50
+      source: scperteval
+      direction: minimize
+      perfect_value: 0
+      feature_space: 50 principal components fit by the evaluator on observed cells
+
+input_contracts:
+  deg:
+    truth: H5AD condition-by-gene DE layer with dataset_id
+    prediction: H5AD condition-by-gene DE layer with method_id
+    alignment: exact condition identifiers and evaluator-declared gene resolution
+  pseudobulk:
+    truth: condition-by-gene observed centroid matrix
+    prediction: condition-by-gene predicted centroid matrix
+    references: matched controls and training-perturbation means
+    de_evidence: condition-by-gene DE mask and continuous weights
+    retrieval: stable condition identifiers and candidate groups
+  single_cell:
+    truth: observed normalized cells by genes with controls and dataset_id
+    prediction: predicted normalized cells by the same genes with method_id
+    expression_scale: required matching identifier in both H5AD uns mappings
+
+result_contract:
+  aggregates: one metric_values entry per metric id
+  auditing: optional aligned metric-by-condition or metric-by-perturbation matrix
+  coverage: finite scored-unit count per metric
+  provenance: JSON record of layers, protocols, parameters, and dependency versions
 
 smoke_test_contract:
   dataset: resources/datasets/srivatsan_2020_sciplex3/srivatsan_2020_sciplex3_compressed.h5ad

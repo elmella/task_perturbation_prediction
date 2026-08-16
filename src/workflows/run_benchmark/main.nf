@@ -16,8 +16,7 @@ methods = [
 
 // construct list of metrics
 metrics = [
-  mean_rowwise_error,
-  mean_rowwise_correlation
+  rowwise
 ]
 
 // helper workflow for starting a workflow based on lists of yaml files

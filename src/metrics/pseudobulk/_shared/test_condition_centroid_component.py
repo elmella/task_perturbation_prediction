@@ -12,12 +12,11 @@ import numpy as np
 
 
 ## VIASH START
-meta = {"executable": "", "name": "mse"}
+meta = {"executable": ""}
 ## VIASH END
 
 
 def main() -> None:
-    metric_id = meta["name"]
     truth = np.array(
         [
             [0.0, 1.0, 2.0, 3.0],
@@ -27,7 +26,7 @@ def main() -> None:
         ]
     )
     zeros = np.zeros_like(truth)
-    with tempfile.TemporaryDirectory(prefix=f"{metric_id}-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="condition-centroid-") as temp_dir:
         temp_path = Path(temp_dir)
         prepared_path = temp_path / "prepared.npz"
         output_path = temp_path / "score.h5ad"
@@ -62,9 +61,15 @@ def main() -> None:
         assert score.shape == (0, 0)
         assert score.uns["dataset_id"] == "synthetic"
         assert score.uns["method_id"] == "perfect_prediction"
-        assert score.uns["metric_ids"].tolist() == [metric_id]
-        expected = 0.0 if metric_id in {"mse", "weighted_mse"} else 1.0
-        assert np.isclose(score.uns["metric_values"][0], expected)
+        metric_ids = score.uns["metric_ids"].tolist()
+        values = dict(zip(metric_ids, score.uns["metric_values"]))
+        assert len(values) == 14
+        assert values["mse"] == 0.0
+        assert values["weighted_mse"] == 0.0
+        for metric_id, value in values.items():
+            if metric_id not in {"mse", "weighted_mse"}:
+                assert np.isclose(value, 1.0), metric_id
+        assert score.uns["per_unit_metric_values"].shape == (14, 4)
 
 
 if __name__ == "__main__":

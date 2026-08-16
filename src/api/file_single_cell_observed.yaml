@@ -1,0 +1,21 @@
+type: file
+example: resources/datasets/single_cell/observed.h5ad
+label: Observed single-cell expression
+summary: Normalized observed expression with cells by genes and perturbation labels.
+description: >-
+  An H5AD file whose X matrix contains normalized expression (cells by genes),
+  whose obs contains the configured perturbation column, and whose var_names
+  contains unique gene identifiers. The uns mapping must identify the dataset
+  and the expression scale used in X.
+info:
+  format:
+    type: h5ad
+    uns:
+      - name: dataset_id
+        type: string
+        required: true
+        description: A unique identifier for the evaluation dataset.
+      - name: expression_scale
+        type: string
+        required: true
+        description: A stable identifier for the normalization and transformation in X.

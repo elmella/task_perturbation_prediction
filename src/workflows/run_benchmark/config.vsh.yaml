@@ -79,8 +79,7 @@ dependencies:
   - name: methods/lgc_ensemble
   - name: methods/transformer_ensemble
   - name: methods/pyboost
-  - name: metrics/mean_rowwise_error
-  - name: metrics/mean_rowwise_correlation
+  - name: metrics/rowwise
 repositories:
   - name: openproblems
     type: github

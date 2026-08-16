@@ -3,10 +3,10 @@ info:
   type: metric
   type_info:
     label: Metric
-    summary: A pseudobulk condition-centroid perturbation prediction metric
+    summary: Pseudobulk condition-centroid perturbation prediction metrics
     description: >-
-      A metric that compares predicted and observed perturbation-response
-      centroids, optionally using aligned references and DE evidence.
+      A metric suite that compares predicted and observed perturbation-response
+      centroids once and returns all applicable paper-derived scores.
 arguments:
   - name: --prepared
     __merge__: file_condition_centroid_bundle.yaml

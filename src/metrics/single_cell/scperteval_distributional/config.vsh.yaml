@@ -1,0 +1,99 @@
+__merge__: ../../../api/comp_single_cell_distribution_metric.yaml
+name: scperteval_distributional
+info:
+  metrics:
+    - name: unbiased_mmd_median_top_k
+      label: Unbiased RBF MMD squared on top-effect genes
+      summary: Unbiased median-bandwidth RBF MMD squared on the top 50 ground-truth effect-size genes.
+      description: >-
+        Compares predicted and observed cell populations with the unbiased RBF
+        maximum mean discrepancy estimator. The kernel bandwidth is the pooled
+        median pairwise distance and genes are selected evaluator-side.
+      min: -.inf
+      max: +.inf
+      maximize: false
+      references: &scperteval_reference
+        doi: 10.64898/2026.07.23.740433
+      links: &scperteval_links
+        repository: https://github.com/Virtual-Cell-Research-Community/scPertEval
+    - name: unbiased_mmd_median_pca_k
+      label: Unbiased RBF MMD squared in PCA space
+      summary: Unbiased median-bandwidth RBF MMD squared on 50 evaluator-fitted principal components.
+      description: >-
+        Compares predicted and observed cell populations with unbiased RBF MMD
+        after projecting both through a PCA transform fitted only on observed
+        evaluator data.
+      min: -.inf
+      max: +.inf
+      maximize: false
+      references: *scperteval_reference
+      links: *scperteval_links
+    - name: energy_distance_top_k
+      label: Energy distance on top-effect genes
+      summary: Bias-corrected energy distance on the top 50 ground-truth effect-size genes.
+      description: >-
+        Computes the Szekely-Rizzo energy statistic with unbiased
+        within-population terms on genes selected by absolute observed
+        perturbation effect size.
+      min: -.inf
+      max: +.inf
+      maximize: false
+      references: *scperteval_reference
+      links: *scperteval_links
+    - name: energy_distance_pca_k
+      label: Energy distance in PCA space
+      summary: Bias-corrected energy distance on 50 evaluator-fitted principal components.
+      description: >-
+        Computes the Szekely-Rizzo energy statistic with unbiased
+        within-population terms after evaluator-fitted PCA projection.
+      min: -.inf
+      max: +.inf
+      maximize: false
+      references: *scperteval_reference
+      links: *scperteval_links
+    - name: sinkhorn_w2_top_k
+      label: Debiased Sinkhorn W2 on top-effect genes
+      summary: GeomLoss debiased Sinkhorn 2-Wasserstein distance on the top 50 effect-size genes.
+      description: >-
+        Uses the packaged GeomLoss Sinkhorn divergence with p=2, debiasing, and
+        scPertEval's default blur on evaluator-selected effect-size genes.
+      min: 0
+      max: +.inf
+      maximize: false
+      references: *scperteval_reference
+      links: *scperteval_links
+    - name: sinkhorn_w2_pca_k
+      label: Debiased Sinkhorn W2 in PCA space
+      summary: GeomLoss debiased Sinkhorn 2-Wasserstein distance on 50 evaluator-fitted principal components.
+      description: >-
+        Uses the packaged GeomLoss Sinkhorn divergence with p=2, debiasing, and
+        scPertEval's default blur after evaluator-fitted PCA projection.
+      min: 0
+      max: +.inf
+      maximize: false
+      references: *scperteval_reference
+      links: *scperteval_links
+resources:
+  - type: python_script
+    path: script.py
+  - path: ../_shared/scperteval_distributional_runner.py
+  - path: ../../_shared/metric_result.py
+test_resources:
+  - type: python_script
+    path: /common/component_tests/check_config.py
+  - type: python_script
+    path: ../_shared/test_scperteval_distributional_component.py
+  - type: python_script
+    path: ../../_shared/test_metric_result.py
+engines:
+  - type: docker
+    image: openproblems/base_python:1.0.0
+    setup:
+      - type: python
+        packages:
+          - scperteval[sinkhorn]==0.1.0
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [midtime, highmem, highcpu]
