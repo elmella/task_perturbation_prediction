@@ -12,9 +12,13 @@ import anndata as ad
 import numpy as np
 
 
+sys.path.insert(0, str(Path(__file__).parents[2] / "_shared"))
 sys.path.insert(0, str(Path(__file__).parent))
 
-from condition_centroid_metric_runner import run_condition_centroid_metric
+from condition_centroid_suite import (
+    evaluate_condition_centroids,
+    run_condition_centroid_suite,
+)
 from condition_centroid_metrics import centroid_accuracy, score_prediction_metrics
 
 
@@ -94,7 +98,7 @@ class PredictionMetricTests(unittest.TestCase):
         self.assertTrue(np.all(scores["r2_delta_control"] < 1))
         self.assertTrue(np.allclose(scores["r2_delta_control_degs"], 1))
 
-    def test_runner_writes_one_score_h5ad(self) -> None:
+    def test_suite_evaluates_and_writes_all_scores_once(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             prepared_path = temp_path / "prepared.npz"
@@ -115,12 +119,42 @@ class PredictionMetricTests(unittest.TestCase):
                     )
                 ),
             )
-            run_condition_centroid_metric("mse", prepared_path, output_path)
+            result = evaluate_condition_centroids(prepared_path)
+            self.assertEqual(len(result.metric_values), 14)
+            self.assertEqual(result.metric_values["mse"], 0.0)
+            run_condition_centroid_suite(prepared_path, output_path)
             output = ad.read_h5ad(output_path)
             self.assertEqual(output.uns["dataset_id"], "synthetic")
             self.assertEqual(output.uns["method_id"], "perfect")
-            self.assertEqual(output.uns["metric_ids"].tolist(), ["mse"])
-            np.testing.assert_array_equal(output.uns["metric_values"], [0.0])
+            self.assertEqual(len(output.uns["metric_ids"]), 14)
+            self.assertEqual(
+                output.uns["per_unit_metric_values"].shape,
+                (14, 4),
+            )
+            self.assertEqual(
+                output.uns["metric_scored_unit_counts"].tolist(),
+                [4] * 14,
+            )
+
+    def test_bundle_requires_unique_condition_keys(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared_path = Path(temp_dir) / "prepared.npz"
+            np.savez_compressed(
+                prepared_path,
+                truth=self.truth,
+                prediction=self.truth,
+                control_reference=self.reference,
+                perturbed_mean_reference=self.reference,
+                deg_mask=self.mask,
+                deg_weights=self.weights,
+                candidate_groups=np.asarray(self.groups),
+                condition_keys=np.asarray(["duplicate"] * 4),
+                metadata_json=np.asarray(
+                    json.dumps({"dataset_id": "synthetic", "method_id": "perfect"})
+                ),
+            )
+            with self.assertRaisesRegex(ValueError, "condition_keys must be unique"):
+                evaluate_condition_centroids(prepared_path)
 
 
 if __name__ == "__main__":

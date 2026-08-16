@@ -1,9 +1,8 @@
 # Paper-derived condition-centroid metrics
 
 This branch adds 14 direct metrics for evaluating perturbation-model
-predictions. It does not add meta-metrics or change the existing Open Problems
-metrics. Each new component lives under `src/metrics/pseudobulk/` and
-uses the score-file interface declared in
+predictions. It does not add meta-metrics. One suite component lives under
+`src/metrics/pseudobulk/condition_centroid/` and uses the score-file interface declared in
 `src/api/comp_condition_centroid_metric.yaml`.
 
 The implementations follow the associated paper codebases:
@@ -31,9 +30,10 @@ evaluator-prepared NPZ bundle declared by
 - `metadata_json`: dataset and method provenance.
 
 The prediction, truth, reference, mask, and weight arrays must have identical
-shape. The metric runner macro-averages finite per-condition scores and writes
-the aggregate to `uns["metric_values"]`. It also records per-condition scores
-and adapter provenance.
+shape. The suite evaluates all 14 metrics in one pass, macro-averages finite
+per-condition scores, and writes one multi-metric score artifact. It also
+records the aligned metric-by-condition matrix, finite coverage, and protocol
+provenance.
 
 ## Metrics
 
@@ -97,9 +97,9 @@ log-normalizes each cell, and writes an ignored NPZ artifact:
 ```bash
 python3 scripts/create_resources/prepare_sciplex3_metric_bundle.py
 
-viash run src/metrics/pseudobulk/mse/config.vsh.yaml -- \
+viash run src/metrics/pseudobulk/condition_centroid/config.vsh.yaml -- \
   --prepared resources/datasets/srivatsan_2020_sciplex3/train_mean_smoke_input.npz \
-  --output resources/datasets/srivatsan_2020_sciplex3/train_mean_smoke_mse.h5ad
+  --output resources/datasets/srivatsan_2020_sciplex3/train_mean_smoke_scores.h5ad
 ```
 
 This is a code smoke test, not a model benchmark result. The dataset and
@@ -116,8 +116,8 @@ python3 -m unittest discover \
   -p 'test_*.py' -v
 ```
 
-Each Viash component also registers the standard configuration check and the
-shared synthetic integration test under `test_resources`.
+The Viash suite registers the standard configuration check, the shared result
+contract test, and a synthetic integration test under `test_resources`.
 
 ## Sources
 

@@ -1,0 +1,21 @@
+type: file
+example: resources/datasets/single_cell/prediction.h5ad
+label: Predicted single-cell expression
+summary: Predicted normalized expression with cells by genes and perturbation labels.
+description: >-
+  An H5AD file whose X matrix contains predicted normalized expression (cells
+  by genes). It must contain exactly the observed gene set and the configured
+  perturbation column. The uns mapping must contain method_id and the same
+  expression_scale identifier as the observed input.
+info:
+  format:
+    type: h5ad
+    uns:
+      - name: method_id
+        type: string
+        required: true
+        description: A unique identifier for the prediction method.
+      - name: expression_scale
+        type: string
+        required: true
+        description: A stable identifier for the normalization and transformation in X.

@@ -1,0 +1,170 @@
+__merge__: ../../../api/comp_condition_centroid_metric.yaml
+name: condition_centroid
+info:
+  metrics:
+    - &miller_metric
+      name: mse
+      label: MSE
+      summary: Mean squared error between predicted and observed condition centroids.
+      description: >-
+        Computes the mean squared gene-wise difference for each matched
+        condition, then reports the macro mean over finite conditions.
+      references: &miller_reference
+        doi: 10.1101/2025.10.20.683304
+      links: &miller_links
+        repository: https://github.com/shiftbioscience/Perturbation-Models-Outperform-Baselines
+      min: 0
+      max: +.inf
+      maximize: false
+    - <<: *miller_metric
+      name: weighted_mse
+      label: DE-weighted MSE
+      summary: MSE weighted by normalized ground-truth DE evidence.
+      description: >-
+        Weights squared gene errors by squared, min-max-normalized absolute
+        ground-truth DE statistics, normalized within each condition.
+    - <<: *miller_metric
+      name: pearson_delta_control
+      label: Pearson delta control
+      summary: Pearson correlation of control-referenced effects over all genes.
+      description: >-
+        Subtracts the matched control centroid from prediction and truth before
+        computing condition-wise Pearson correlation.
+      min: -1
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: pearson_delta_control_degs
+      label: Pearson delta control DEGs
+      summary: Control-referenced Pearson correlation on significant DE genes.
+      description: >-
+        Computes control-referenced Pearson correlation after restricting each
+        condition to its ground-truth significant DE genes.
+      min: -1
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: pearson_delta_perturbed_mean
+      label: Pearson delta perturbed mean
+      summary: Pearson correlation relative to the training-perturbation mean.
+      description: >-
+        Centers prediction and truth on the equal-condition-weighted training
+        perturbation mean before computing Pearson correlation.
+      min: -1
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: pearson_delta_perturbed_mean_degs
+      label: Pearson delta perturbed mean DEGs
+      summary: Perturbed-mean Pearson correlation on significant DE genes.
+      description: >-
+        Applies training-perturbation-mean centering and restricts each
+        condition to its significant DE genes.
+      min: -1
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: r2_delta_control
+      label: R2 delta control
+      summary: R-squared of control-referenced effects over all genes.
+      description: >-
+        Computes condition-wise R-squared after subtracting the matched control
+        centroid from prediction and truth.
+      min: -.inf
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: r2_delta_control_degs
+      label: R2 delta control DEGs
+      summary: Control-referenced R-squared on significant DE genes.
+      description: >-
+        Computes control-referenced R-squared on each condition's ground-truth
+        significant DE genes.
+      min: -.inf
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: r2_delta_perturbed_mean
+      label: R2 delta perturbed mean
+      summary: R-squared relative to the training-perturbation mean.
+      description: >-
+        Centers prediction and truth on the equal-condition-weighted training
+        perturbation mean before computing R-squared.
+      min: -.inf
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: r2_delta_perturbed_mean_degs
+      label: R2 delta perturbed mean DEGs
+      summary: Perturbed-mean R-squared on significant DE genes.
+      description: >-
+        Applies training-perturbation-mean centering and restricts each
+        condition to its significant DE genes.
+      min: -.inf
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: weighted_r2_delta_control
+      label: DE-weighted R2 delta control
+      summary: DE-evidence-weighted R-squared relative to control.
+      description: >-
+        Computes control-referenced R-squared with gene contributions weighted
+        by normalized ground-truth DE statistics.
+      min: -.inf
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: weighted_r2_delta_perturbed_mean
+      label: DE-weighted R2 delta perturbed mean
+      summary: DE-evidence-weighted R-squared relative to the perturbed mean.
+      description: >-
+        Computes training-perturbation-mean-referenced R-squared with gene
+        contributions weighted by normalized ground-truth DE statistics.
+      min: -.inf
+      max: 1
+      maximize: true
+    - <<: *miller_metric
+      name: normalized_inverse_rank
+      label: Normalized inverse rank
+      summary: Fraction of unmatched truths farther from a prediction than its match.
+      description: >-
+        Within each candidate group, compares the matched Euclidean distance
+        with every unmatched observed centroid; ties are failures.
+      min: 0
+      max: 1
+      maximize: true
+    - name: centroid_accuracy
+      label: Centroid accuracy
+      summary: Systema Euclidean centroid retrieval accuracy.
+      description: >-
+        The released Systema formula is the same as normalized inverse rank
+        when evaluated over the same candidate pool. It is a source alias, not
+        an independent aggregate vote.
+      references:
+        doi: 10.1038/s41587-025-02777-8
+      links:
+        repository: https://github.com/mlbio-epfl/systema
+      min: 0
+      max: 1
+      maximize: true
+resources:
+  - type: python_script
+    path: script.py
+  - path: ../_shared/condition_centroid_suite.py
+  - path: ../_shared/condition_centroid_metrics.py
+  - path: ../../_shared/metric_result.py
+test_resources:
+  - type: python_script
+    path: /common/component_tests/check_config.py
+  - type: python_script
+    path: ../_shared/test_condition_centroid_component.py
+  - type: python_script
+    path: ../../_shared/test_metric_result.py
+engines:
+  - type: docker
+    image: openproblems/base_python:1.0.0
+runners:
+  - type: executable
+  - type: nextflow
+    directives:
+      label: [midtime, highmem, highcpu]

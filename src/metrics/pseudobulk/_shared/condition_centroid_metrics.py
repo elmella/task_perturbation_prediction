@@ -207,6 +207,18 @@ def score_prediction_metrics(
         "deg_weights": np.asarray(deg_weights, dtype=float),
     }
     _check_same_shape(**arrays)
+    for name in (
+        "truth",
+        "prediction",
+        "control_reference",
+        "perturbed_mean_reference",
+    ):
+        if not np.isfinite(arrays[name]).all():
+            raise ValueError(f"{name} must contain only finite values")
+    if not np.isfinite(arrays["deg_weights"]).all() or np.any(
+        arrays["deg_weights"] < 0
+    ):
+        raise ValueError("deg_weights must contain finite non-negative values")
 
     truth_control = arrays["truth"] - arrays["control_reference"]
     prediction_control = arrays["prediction"] - arrays["control_reference"]

@@ -3,9 +3,10 @@ info:
   type: metric
   type_info:
     label: Metric
-    summary: A perturbation prediction metric
+    summary: Differential-expression perturbation prediction metrics
     description: |
-      A metric to compare a perturbation prediction to the ground truth.
+      A metric suite comparing predicted and observed condition-by-gene
+      differential-expression results.
 arguments:
   - name: --de_test
     __merge__: file_de_test.yaml
@@ -36,10 +37,3 @@ arguments:
     choices: [de_test, intersection]
     description: |
       How to resolve difference in genes between the two datasets.
-test_resources:
-  - type: python_script
-    path: /common/component_tests/check_config.py
-  - type: python_script
-    path: /common/component_tests/run_and_check_output.py
-  - path: /resources/datasets/neurips-2023-data
-    dest: resources/datasets/neurips-2023-data

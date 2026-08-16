@@ -1,7 +1,11 @@
 type: file
 example: resources/datasets/neurips-2023-data/score.h5ad
 label: Score
-summary: "File indicating the score of a metric."
+summary: File containing one or more metric scores and their provenance.
+description: >-
+  A score H5AD with aggregate metric values. Metric suites may additionally
+  store aligned per-unit identifiers, a metric-by-unit value matrix, and finite
+  scored-unit counts for auditing.
 info:
   format:
     type: h5ad
@@ -24,3 +28,17 @@ info:
         description: "The metric values obtained for the given prediction. Must be of same length as 'metric_ids'."
         multiple: true
         required: true
+      - type: string
+        name: provenance_json
+        description: JSON object recording the exact evaluation protocol and input provenance.
+        required: true
+      - type: string
+        name: per_unit_ids
+        description: Optional stable identifiers for conditions or perturbation populations.
+        multiple: true
+        required: false
+      - type: integer
+        name: metric_scored_unit_counts
+        description: Optional finite per-unit score count for each metric.
+        multiple: true
+        required: false
